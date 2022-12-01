@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 
 // Functions
 const functions = require('../functions/crud');
+const editAreas = require('./editAreas');
 
 app.use(express.json()); 
 app.use(express.static('public'));
@@ -85,7 +86,7 @@ router.post('/users/auth', async (req, res) => {
     }
     try {
       if(await bcrypt.compare(req.body.password, user.password)) {
-        res.send('Success');
+        res.redirect('/edit');
       } else {
         res.send('Not Allowed');
       }

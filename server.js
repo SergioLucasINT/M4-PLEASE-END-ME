@@ -10,6 +10,7 @@ app.set('view engine', 'ejs');
 
 // Routes
 const userCred = require('./tools/routes/userCred.js');
+const editAreas = require('./tools/routes/editAreas.js');
 
 mysql.createConnection({
     host: 'localhost',
@@ -28,3 +29,6 @@ app.use('/', userCred);
 app.use('/users', userCred);
 app.use('/users/register', userCred);
 app.use('/users/auth', userCred);
+
+// Edit page
+app.use('/edit', editAreas);
