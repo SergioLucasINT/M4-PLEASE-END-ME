@@ -1,11 +1,13 @@
 const express = require('express'); 
 const app = express();
-const mysql = require('mysql');
+const sqlite3 = require('sqlite3').verbose();
 const router = express.Router();
 const bodyParser = require('body-parser');
 
 // Functions
 const functions = require('../functions/crud');
+
+const DBPATH = 'dbUser.db';
 
 app.use(express.json()); 
 app.use(express.static('public'));
@@ -13,19 +15,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 router.get('/', (req, res) => {
-    var con = mysql.createConnection(connection_info);
 
-    con.query(functions.readNode(query_data['table'], '*'), (err, areas) => {
-        res.render('pages/edit', {areas: areas});
-    });
+  var db = new sqlite3.Database(DBPATH);
+
+  db.all(functions.readNode(query_data['table'], '*'), [],  (err, areas ) => {
+		if (err) {
+		    throw err;
+		}
+    res.render('pages/edit', {areas: areas});
+	});
+
+	db.close();
+
 });
-
-var connection_info = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'atech_proj'
-};
 
 var query_data = {
   table: '`areas`',
@@ -34,11 +36,16 @@ var query_data = {
 
 router.get('/areas', (req, res) => {
 
-    var con = mysql.createConnection(connection_info);
+  var db = new sqlite3.Database(DBPATH);
 
-    con.query(functions.readNode(query_data['table'], '*'), (err, areas) => {
-      res.json(areas), {areas: areas};
-    });
+  db.all(functions.readNode(query_data['table'], '*'), [],  (err, areas ) => {
+		if (err) {
+		    throw err;
+		}
+    res.json(areas), {areas: areas};
+	});
+  
+	db.close();
 
 });
 module.exports = router;

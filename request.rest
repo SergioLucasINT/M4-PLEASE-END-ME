@@ -6,8 +6,8 @@ POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-    "funcid" : "admin",
-    "password": "password",
+    "funcid" : "admoin",
+    "password": "passdsaword",
     "user_creation_token": "1234"
 }
 

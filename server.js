@@ -3,6 +3,8 @@ const app = express();
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 
+const DBPATH = 'dbUser.db';
+
 app.use(express.json()); 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -12,12 +14,6 @@ app.set('view engine', 'ejs');
 const userCred = require('./tools/routes/userCred.js');
 const editAreas = require('./tools/routes/editAreas.js');
 
-mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'atech_proj'
-});
 
 const port = 3000;
 app.listen(port, (req, res) => {

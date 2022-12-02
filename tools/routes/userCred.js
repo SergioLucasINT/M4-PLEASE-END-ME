@@ -1,9 +1,11 @@
 const express = require('express'); 
 const app = express();
 const bcrypt = require('bcrypt');
-const mysql = require('mysql');
+const sqlite3 = require('sqlite3').verbose();
 const router = express.Router();
 const bodyParser = require('body-parser');
+
+const DBPATH = 'dbUser.db';
 
 // Functions
 const functions = require('../functions/crud');
@@ -18,68 +20,92 @@ router.get('/', (req, res) => {
   res.render('pages/login');
 });
 
-var connection_info = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'atech_proj'
-};
-
 var query_data = {
   table: '`login_auth`',
-  insert_columns: '`funcid`, `password`'
+  insert_columns: '`funcid`, `password`',
+  insert_columns2: '`funcid`, `password`, `user_creation_token`'
 };
 
 router.get('/users', (req, res) => {
 
-  var con = mysql.createConnection(connection_info);
+  var db = new sqlite3.Database(DBPATH);
 
-  con.query(functions.readNode(query_data['table'], '*'), (err, users) => {
-    res.json(users);
-  });
+  db.all(functions.readNode(query_data['table'], '*'), [],  (err, users ) => {
+		if (err) {
+		    throw err;
+		}
+		res.json(users);
+	});
+	db.close();
+  
 });
 
 router.post('/users/new', (req, res) => {
 
-  var con = mysql.createConnection(connection_info);
+  var db = new sqlite3.Database(DBPATH);
 
   console.log(req.body);
 
-  con.query(functions.readNode(query_data['table'], '*'), async (err, users) => {
+  db.all(functions.readNode(query_data['table'], '*'), [], async (err, users ) => {
+		if (err) {
+		    throw err;
+		}
     const user = users.find(user => user.user_creation_token == req.body.user_creation_token)
     if (user == null) {
       return res.status(400).send('Invalid User Creation Token');
     } else {
       return res.status(201).send('Valid Token');
     }
-  });
+	});
+
+	db.close();
 
 });
 
 router.post('/users/register', async (req,res) => {
 
-  var con = mysql.createConnection(connection_info);
+  var db = new sqlite3.Database(DBPATH);
 
-  con.query(functions.readNode(query_data['table'], '*'), async (err, users) => {
-      try {
-          const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  db.all(functions.readNode(query_data['table'], '*'), [], async (err, users ) => {
 
-          con.query(functions.createNode(query_data['table'], query_data['insert_columns'], "'" + req.body.funcid + "', '" + hashedPassword + "'"));
+    console.log(req.body);
 
-          res.status(201).send();
-      } catch {
-          res.status(500).send();
-      }
-  });
+		if (err) {
+		    throw err;
+		}
+
+    try {
+
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+      db.run(functions.createNode(query_data['table'], query_data['insert_columns2'], "'" + req.body.funcid + "', '" + hashedPassword + "'," + "'" + req.body.user_creation_token + "'"), [], function(err) {
+        if (err) {
+          return console.error(err.message);
+        }
+        console.log(`Rows inserted ${this.changes}`);
+      });
+
+      res.status(201).send();
+
+    } catch {
+
+      res.status(500).send();
+
+    }
+	});
+
 });
 
 router.post('/users/auth', async (req, res) => {
 
-  var con = mysql.createConnection(connection_info);
+  var db = new sqlite3.Database(DBPATH);
 
   console.log(req.body);
 
-  con.query(functions.readNode(query_data['table'], '*'), async (err, users) => {
+  db.all(functions.readNode(query_data['table'], '*'), [],  async (err, users ) => {
+		if (err) {
+		    throw err;
+		}
     const user = users.find(user => user.funcid == req.body.funcid)
     if (user == null) {
       return res.status(400).send('Cannot find user');
@@ -93,7 +119,10 @@ router.post('/users/auth', async (req, res) => {
     } catch {
       res.status(500).send();
     }
-  });
+	});
+  
+	db.close();
 });
+
 
 module.exports = router;
